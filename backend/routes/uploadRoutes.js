@@ -9,6 +9,12 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.post("/", upload.single("file"), async (req, res) => {
+    console.log("📥 Received file:", req.file);        // Check if multer received the file
+  console.log("👤 Received userId:", req.body.userId); // Confirm userId is present
+
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" }); // Early exit if file is missing
+  }
   try {
     const { userId } = req.body;
 
