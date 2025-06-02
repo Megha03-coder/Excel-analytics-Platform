@@ -1,29 +1,26 @@
+// components/FileUpload.jsx
 import { useState } from "react";
 import axios from "axios";
 
 export default function FileUpload({ userId }) {
   const [file, setFile] = useState(null);
-  const [status, setStatus] = useState(""); // ✅ FIXED
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
-   
+
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file) return alert("Please select a file");
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("userId", userId);
-    console.log("📤 Uploading file:", file);
-  console.log("👤 User ID being sent:", userId);
-
+    formData.append("userId", userId); // simulate user
 
     try {
       const res = await axios.post("http://localhost:5000/api/upload", formData);
-      console.log("✅ Upload Success:", res.data);
-      setStatus("Upload successful"); // ✅ FIXED
+      alert("File uploaded successfully!");
+      console.log(res.data);
     } catch (err) {
-      console.error("❌ Upload error:", err.response?.data || err.message);
-      setStatus("Upload failed"); // ✅ FIXED
+      alert("Upload failed");
+      console.error(err);
     }
   };
 
@@ -37,13 +34,6 @@ export default function FileUpload({ userId }) {
       >
         Upload
       </button>
-
-      {/* ✅ Show status message */}
-      {status && (
-        <p className={`mt-2 ${status.includes("successful") ? "text-green-600" : "text-red-600"}`}>
-          {status}
-        </p>
-      )}
     </div>
   );
 }

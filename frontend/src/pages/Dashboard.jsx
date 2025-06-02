@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import jwt_decode from "jwt-decode";
-
-
 import FileUpload from "../components/FileUpload";
 import ChartVisualizer from "../components/ChartVisualizer"; // ✅ NEW
+import jwt_decode from "jwt-decode";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
