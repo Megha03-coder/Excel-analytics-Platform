@@ -13,6 +13,9 @@ export default function FileUpload({ userId }) {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("userId", userId);
+    console.log("📤 Uploading file:", file);
+  console.log("👤 User ID being sent:", userId);
+
 
     try {
       const res = await axios.post("http://localhost:5000/api/upload", formData);
