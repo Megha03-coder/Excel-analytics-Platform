@@ -1,41 +1,37 @@
+// backend/routes/uploadRoutes.js
 const express = require("express");
 const multer = require("multer");
-const xlsx = require("xlsx"); // ✅ FIXED
+const XLSX = require("xlsx");
 const Upload = require("../models/Upload");
 
 const router = express.Router();
 
+// Store file in memory (no disk)
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
 router.post("/", upload.single("file"), async (req, res) => {
-    console.log("📥 Received file:", req.file);        // Check if multer received the file
-  console.log("👤 Received userId:", req.body.userId); // Confirm userId is present
-
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded" }); // Early exit if file is missing
-  }
   try {
-    const { userId } = req.body;
+    const buffer = req.file.buffer;
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    // ✅ Read buffer using xlsx
-    const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(sheet);
-
-    const newUpload = new Upload({
-      userId,
+    const uploadRecord = new Upload({
+      userId: req.body.userId,
       fileName: req.file.originalname,
-      parsedData: data,
+      parsedData: jsonData,
     });
 
-    await newUpload.save();
-    res.status(200).json({ message: "Upload successful" });
+    await uploadRecord.save();
+    res.status(200).json({ message: "File uploaded and parsed", data: uploadRecord });
   } catch (err) {
-    console.error("❌ Upload error:", err); // ✅ Debugging
+    console.error(err);
     res.status(500).json({ message: "Upload failed", error: err.message });
   }
 });
+
+// backend/routes/uploadRoutes.js
 
 router.get("/user/:userId", async (req, res) => {
   try {
@@ -45,5 +41,6 @@ router.get("/user/:userId", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch uploads" });
   }
 });
+
 
 module.exports = router;

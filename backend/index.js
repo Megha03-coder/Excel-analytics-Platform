@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
-pp.use("/api/upload", uploadRoutes);
+app.use("/api/upload", uploadRoutes);
 
 mongoose.connect("mongodb+srv://exceluser:excelpass123@cluster0.ourqfbl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
   useNewUrlParser: true,
