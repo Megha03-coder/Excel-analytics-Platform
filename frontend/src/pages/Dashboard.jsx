@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import FileUpload from "../components/FileUpload";
 import ChartVisualizer from "../components/ChartVisualizer"; // ✅ NEW
 import jwt_decode from "jwt-decode";
+import UploadHistory from "../components/UploadHistory";
+
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -28,6 +30,8 @@ export default function Dashboard() {
 
         {user && <FileUpload userId={user._id} />}
         {user && <ChartVisualizer userId={user._id} />}
+        {<UploadHistory userId={user._id} />}
+
       </div>
     </div>
   );

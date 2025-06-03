@@ -1,133 +1,95 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import axios from "axios";
-import Select from "react-select";
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#8dd1e1"];
-
 export default function ChartVisualizer({ userId }) {
-  const [uploads, setUploads] = useState([]);
-  const [selectedData, setSelectedData] = useState(null);
-  const [xKey, setXKey] = useState(null);
-  const [yKey, setYKey] = useState(null);
-  const [chartType, setChartType] = useState("bar");
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const chartRef = useRef(null);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/upload/user/${userId}`)
-      .then(res => setUploads(res.data))
-      .catch(err => console.error(err));
+    const fetchLatestUpload = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/upload/user/${userId}`);
+        const uploads = res.data;
+        if (uploads.length > 0) {
+          const latestData = uploads[uploads.length - 1].parsedData;
+          setChartData(latestData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch upload data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (userId) fetchLatestUpload();
   }, [userId]);
 
-  const handleFileSelect = (upload) => {
-    setSelectedData(upload.parsedData);
-    setXKey(null);
-    setYKey(null);
+  const downloadPNG = async () => {
+    const canvas = await html2canvas(chartRef.current);
+    const link = document.createElement("a");
+    link.download = "excel_chart.png";
+    link.href = canvas.toDataURL();
+    link.click();
   };
 
-  const getKeys = selectedData ? Object.keys(selectedData[0] || {}) : [];
-
-  const renderChart = () => {
-    if (!xKey || !yKey || !selectedData) return null;
-
-    switch (chartType) {
-      case "bar":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={selectedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={xKey} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey={yKey} fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        );
-      case "line":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={selectedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={xKey} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey={yKey} stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        );
-      case "pie":
-        return (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie data={selectedData} dataKey={yKey} nameKey={xKey} cx="50%" cy="50%" outerRadius={150} label>
-                {selectedData.map((_, i) => (
-                  <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        );
-      default:
-        return null;
-    }
+  const downloadPDF = async () => {
+    const canvas = await html2canvas(chartRef.current);
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF();
+    const width = pdf.internal.pageSize.getWidth();
+    const height = (canvas.height * width) / canvas.width;
+    pdf.addImage(imgData, "PNG", 0, 0, width, height);
+    pdf.save("excel_chart.pdf");
   };
 
   return (
-    <div className="bg-white mt-6 p-4 rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">Visualize Uploaded Excel Data</h2>
+    <div className="bg-white p-6 rounded shadow mt-6">
+      <h2 className="text-xl font-semibold mb-4">📊 Excel Data Chart</h2>
 
-      <div className="mb-4">
-        <label className="font-medium">Select Upload:</label>
-        <select
-          className="w-full border rounded p-2 mt-1"
-          onChange={(e) => handleFileSelect(uploads.find(u => u._id === e.target.value))}
-        >
-          <option value="">-- Choose File --</option>
-          {uploads.map(upload => (
-            <option key={upload._id} value={upload._id}>{upload.fileName}</option>
-          ))}
-        </select>
-      </div>
-
-      {selectedData && (
+      {loading ? (
+        <p>Loading chart data...</p>
+      ) : chartData.length === 0 ? (
+        <p className="text-gray-500">No data available for chart.</p>
+      ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="font-medium">Select X Axis:</label>
-              <Select
-                options={getKeys.map(key => ({ value: key, label: key }))}
-                onChange={(option) => setXKey(option.value)}
-              />
-            </div>
-            <div>
-              <label className="font-medium">Select Y Axis:</label>
-              <Select
-                options={getKeys.map(key => ({ value: key, label: key }))}
-                onChange={(option) => setYKey(option.value)}
-              />
-            </div>
+          <div ref={chartRef} className="bg-gray-50 p-4 rounded mb-4">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey={Object.keys(chartData[0])[0]} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey={Object.keys(chartData[0])[1]} fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
-          <div className="mb-4">
-            <label className="font-medium">Chart Type:</label>
-            <select
-              className="w-full border rounded p-2 mt-1"
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value)}
+          <div className="flex gap-3">
+            <button
+              onClick={downloadPNG}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              <option value="bar">Bar</option>
-              <option value="line">Line</option>
-              <option value="pie">Pie</option>
-            </select>
+              📥 Download PNG
+            </button>
+            <button
+              onClick={downloadPDF}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              📄 Download PDF
+            </button>
           </div>
-
-          {renderChart()}
         </>
       )}
     </div>
