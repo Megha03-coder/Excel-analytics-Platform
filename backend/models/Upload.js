@@ -5,6 +5,8 @@ const uploadSchema = new mongoose.Schema({
   fileName: { type: String, required: true },
   parsedData: { type: Array, required: true },
   uploadedAt: { type: Date, default: Date.now },
+  
 });
+
 
 module.exports = mongoose.model("Upload", uploadSchema);
