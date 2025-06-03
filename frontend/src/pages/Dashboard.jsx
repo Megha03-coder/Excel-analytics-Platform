@@ -30,8 +30,8 @@ export default function Dashboard() {
 
         {user && <FileUpload userId={user._id} />}
         {user && <ChartVisualizer userId={user._id} />}
-        {<UploadHistory userId={user._id} />}
-
+        {user && <UploadHistory userId={user._id} />
+}
       </div>
     </div>
   );
