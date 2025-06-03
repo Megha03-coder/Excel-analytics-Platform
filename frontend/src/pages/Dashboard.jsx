@@ -9,6 +9,7 @@ import UploadHistory from "../components/UploadHistory";
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     const token = localStorage.getItem("token");
