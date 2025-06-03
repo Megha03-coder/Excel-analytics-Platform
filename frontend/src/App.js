@@ -3,6 +3,8 @@ import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AdminRoutes from "./routes/AdminRoutes";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -12,7 +14,16 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route
+  path="/admin"
+  element={
+    <AdminRoutes>
+      <AdminDashboard />
+    </AdminRoutes>
+  }
+/>
       </Routes>
+      
     </BrowserRouter>
   );
 }
