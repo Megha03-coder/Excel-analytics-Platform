@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip
 } from "recharts";
+import { Chart } from "react-google-charts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 

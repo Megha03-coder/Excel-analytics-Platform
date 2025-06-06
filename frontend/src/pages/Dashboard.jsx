@@ -1,39 +1,46 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import FileUpload from "../components/FileUpload";
-import ChartVisualizer from "../components/ChartVisualizer"; // ✅ NEW
 import jwt_decode from "jwt-decode";
-import UploadHistory from "../components/UploadHistory";
 
+import FileUpload from "../components/FileUpload";
+import ChartVisualizer from "../components/ChartVisualizer";
+import UploadHistory from "../components/UploadHistory";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
+  const [parsedData, setParsedData] = useState([]);
   const navigate = useNavigate();
-  
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+
     if (!token) {
       navigate("/login");
     } else {
-      const decoded = jwt_decode(token);
-      setUser({ _id: decoded.userId, name: decoded.name });
+      try {
+        const decoded = jwt_decode(token);
+        setUser(decoded); // ✅ Set user info from token
+      } catch (error) {
+        console.error("Invalid token", error);
+        navigate("/login");
+      }
     }
-  }, [navigate]);
+  }, []);
+
+  const handleFileParsed = (data) => {
+    setParsedData(data);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-5xl mx-auto bg-white rounded shadow p-6">
-        <h1 className="text-3xl font-bold mb-4">Excel Analytics Dashboard</h1>
-        {user && (
-          <p className="text-gray-700 mb-6">Welcome, <strong>{user.name}</strong></p>
-        )}
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Excel Analytics Dashboard</h1>
+      {user && <p className="mb-2">Welcome, {user.name}</p>}
 
-        {user && <FileUpload userId={user._id} />}
-        {user && <ChartVisualizer userId={user._id} />}
-        {user && <UploadHistory userId={user._id} />
-}
-      </div>
+      <FileUpload userId={user?.id} onParsed={handleFileParsed} />
+
+      <ChartVisualizer data={parsedData} />
+
+      {user && <UploadHistory userId={user.id} />}
     </div>
   );
 }
