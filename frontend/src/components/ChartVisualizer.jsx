@@ -16,14 +16,19 @@ export default function ChartVisualizer({ userId }) {
   const [uploads, setUploads] = useState([]);
   const [selectedUpload, setSelectedUpload] = useState(null);
   const [chartType, setChartType] = useState("bar");
+  const [xAxisKey, setXAxisKey] = useState("");
+  const [yAxisKey, setYAxisKey] = useState("");
   const chartRef = useRef(null);
 
   useEffect(() => {
     const fetchUploads = async () => {
       try {
         const res = await axios.get(`http://localhost:5000/api/upload/user/${userId}`);
-        setUploads(res.data.reverse());
-        if (res.data.length > 0) setSelectedUpload(res.data[0]);
+        const uploadList = res.data.reverse();
+        setUploads(uploadList);
+        if (uploadList.length > 0) {
+          setSelectedUpload(uploadList[0]);
+        }
       } catch (err) {
         console.error("❌ Failed to fetch uploads:", err);
       }
@@ -32,8 +37,16 @@ export default function ChartVisualizer({ userId }) {
   }, [userId]);
 
   const parsedData = selectedUpload?.parsedData || [];
+  const keys = parsedData.length > 0 ? Object.keys(parsedData[0]) : [];
 
-  const downloadPDF = async () => {
+  useEffect(() => {
+    if (keys.length > 1) {
+      setXAxisKey(keys[0]);
+      setYAxisKey(keys[1]);
+    }
+  }, [selectedUpload]);
+
+  const downloadchart = async () => {
     const canvas = await html2canvas(chartRef.current);
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF();
@@ -51,7 +64,6 @@ export default function ChartVisualizer({ userId }) {
         <p>No uploads yet.</p>
       ) : (
         <>
-          {/* Upload selector */}
           <div className="flex flex-wrap gap-4 items-center mb-4">
             <select
               className="p-2 border rounded"
@@ -78,15 +90,39 @@ export default function ChartVisualizer({ userId }) {
               <option value="pie">Pie Chart</option>
             </select>
 
+            {/* Axis selectors for bar and line only */}
+            {(chartType === "bar" || chartType === "line") && (
+              <>
+                <select
+                  className="p-2 border rounded"
+                  value={xAxisKey}
+                  onChange={(e) => setXAxisKey(e.target.value)}
+                >
+                  {keys.map((key) => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+
+                <select
+                  className="p-2 border rounded"
+                  value={yAxisKey}
+                  onChange={(e) => setYAxisKey(e.target.value)}
+                >
+                  {keys.map((key) => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+              </>
+            )}
+
             <button
-              onClick={downloadPDF}
+              onClick={downloadchart}
               className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
             >
-              Download PDF
+              Download chart
             </button>
           </div>
 
-          {/* Chart display */}
           <div ref={chartRef} className="overflow-auto">
             {parsedData.length === 0 ? (
               <p>No data in this file.</p>
@@ -94,19 +130,19 @@ export default function ChartVisualizer({ userId }) {
               <>
                 {chartType === "bar" && (
                   <BarChart width={600} height={300} data={parsedData}>
-                    <XAxis dataKey={Object.keys(parsedData[0])[0]} />
+                    <XAxis dataKey={xAxisKey} />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey={Object.keys(parsedData[0])[1]} fill="#8884d8" />
+                    <Bar dataKey={yAxisKey} fill="#8884d8" />
                   </BarChart>
                 )}
 
                 {chartType === "line" && (
                   <LineChart width={600} height={300} data={parsedData}>
-                    <XAxis dataKey={Object.keys(parsedData[0])[0]} />
+                    <XAxis dataKey={xAxisKey} />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey={Object.keys(parsedData[0])[1]} stroke="#82ca9d" />
+                    <Line type="monotone" dataKey={yAxisKey} stroke="#82ca9d" />
                   </LineChart>
                 )}
 
@@ -114,8 +150,8 @@ export default function ChartVisualizer({ userId }) {
                   <PieChart width={400} height={400}>
                     <Pie
                       data={parsedData}
-                      dataKey={Object.keys(parsedData[0])[1]}
-                      nameKey={Object.keys(parsedData[0])[0]}
+                      dataKey={yAxisKey}
+                      nameKey={xAxisKey}
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
