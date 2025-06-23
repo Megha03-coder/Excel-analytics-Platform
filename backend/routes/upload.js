@@ -5,10 +5,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const ExcelUpload = require("../models/ExcelUpload");
 
 const router = express.Router();
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// ✅ Upload Excel file route
 router.post("/upload", authMiddleware, upload.single("file"), async (req, res) => {
   try {
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
@@ -30,4 +30,14 @@ router.post("/upload", authMiddleware, upload.single("file"), async (req, res) =
   }
 });
 
-module.exports=router;
+// ✅ Fetch Upload History route (this should be OUTSIDE of the POST route)
+router.get("/user-history", authMiddleware, async (req, res) => {
+  try {
+    const uploads = await ExcelUpload.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(uploads);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch upload history" });
+  }
+});
+
+module.exports = router;

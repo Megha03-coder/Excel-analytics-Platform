@@ -42,7 +42,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch((err) => console.error("❌ MongoDB error:", err.message));
 
 // ✅ API Routes
-app.use("/api", uploadRoutes);
+app.use("/api/upload", uploadRoutes);
 app.use("/api/auth", authRoutes);
 
 // ✅ Start Server
