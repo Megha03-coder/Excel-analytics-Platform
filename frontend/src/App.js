@@ -22,7 +22,7 @@ export default function App() {
         <Route path="/ai-insights" element={<AIInsights />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route
-    path="/dashboard"
+    path="/dashboard/*"
     element={
       <ProtectedRoute>
         <DashboardPage />
