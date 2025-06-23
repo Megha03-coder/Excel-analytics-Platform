@@ -1,60 +1,85 @@
-// UploadExcel.jsx
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import {jwtDecode} from "jwt-decode";
+import { UploadCloud, XCircle } from "lucide-react";
 
-export default function UploadExcel() {
+const UploadExcel = ({ onParsed }) => {
   const [file, setFile] = useState(null);
-  const [status, setStatus] = useState("");
-  const [userId, setUserId] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      setUserId(decoded.id);
-    }
-  }, []);
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+    setError("");
+    setSuccess("");
+  };
 
   const handleUpload = async () => {
-    if (!file) return alert("Please select a file");
+    if (!file) {
+      setError("Please select a file first.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("userId", userId);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/upload", formData);
-      console.log("✅ Upload response:", res.data);
-      setStatus("✅ File uploaded successfully!");
+      const token = localStorage.getItem("token");
+      const res = await axios.post("http://localhost:5000/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data && res.data.data) {
+        setSuccess("Upload successful!");
+        setError("");
+        onParsed(res.data.data); // send to parent
+      } else {
+        setError("Upload succeeded but no data received.");
+      }
     } catch (err) {
-      console.error("❌ Upload failed:", err.response?.data || err.message);
-      setStatus("❌ Upload failed: " + (err.response?.data?.error || err.message));
+      console.error("Upload failed:", err);
+      setSuccess("");
+      setError(
+        err.response?.data?.error || "Upload failed: Unauthorized or server error"
+      );
     }
   };
 
   return (
-    <div className="p-10 flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="bg-white rounded-xl shadow-xl p-10 w-full max-w-lg text-center">
-        <h1 className="text-3xl font-bold text-blue-700 mb-6">📤 Upload Excel File</h1>
+    <div className="bg-white shadow-lg rounded-lg p-6 max-w-xl mx-auto mt-10">
+      <div className="text-center mb-6">
+        <UploadCloud size={40} className="text-blue-600 mx-auto mb-2" />
+        <h2 className="text-2xl font-bold text-blue-700">Upload Excel File</h2>
+      </div>
+
+      <div className="flex items-center gap-3 mb-4">
         <input
           type="file"
           accept=".xlsx, .xls"
-          onChange={(e) => setFile(e.target.files[0])}
-          className="mb-4 w-full border border-gray-300 rounded px-3 py-2"
+          onChange={handleFileChange}
+          className="w-full px-3 py-2 border rounded-md"
         />
-        <button
-          onClick={handleUpload}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Upload
-        </button>
-        {status && (
-          <p className={`mt-4 text-sm ${status.includes("✅") ? "text-green-600" : "text-red-600"}`}>
-            {status}
-          </p>
-        )}
       </div>
+
+      <button
+        onClick={handleUpload}
+        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 w-full"
+      >
+        Upload
+      </button>
+
+      {success && (
+        <p className="mt-4 text-green-600 text-center font-medium">{success}</p>
+      )}
+      {error && (
+        <p className="mt-4 text-red-600 text-center flex items-center justify-center gap-1">
+          <XCircle size={16} /> {error}
+        </p>
+      )}
     </div>
   );
-}
+};
+
+export default UploadExcel;

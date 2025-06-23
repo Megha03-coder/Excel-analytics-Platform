@@ -13,9 +13,11 @@ import UploadExcel from "../components/UploadExcel";
 import UploadHistory from "../components/UploadHistory";
 import AIInsights from "../components/AIInsights";
 import AdminDashboard from "../components/AdminDashboard";
+import ChartVisualizer from "../components/ChartVisualizer"; // Make sure this exists
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [parsedData, setParsedData] = useState([]); // ✅ Safely initialized
   const location = useLocation();
 
   const navItems = [
@@ -33,7 +35,6 @@ const DashboardPage = () => {
           isSidebarOpen ? "w-64" : "w-20"
         } shadow-lg`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
           {isSidebarOpen ? (
             <div className="flex items-center gap-2">
@@ -51,7 +52,6 @@ const DashboardPage = () => {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex flex-col p-4 gap-4">
           {navItems.map((item) => (
             <Link
@@ -73,7 +73,7 @@ const DashboardPage = () => {
       {/* Main Content */}
       <main className="flex-1 p-6 overflow-y-auto bg-gray-50">
         <Routes>
-          {/* Default welcome page */}
+          {/* Default Welcome */}
           <Route
             path="/"
             element={
@@ -81,82 +81,27 @@ const DashboardPage = () => {
                 <h2 className="text-3xl font-extrabold text-green-700 mb-4">
                   Welcome to Excel Analytics Platform
                 </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-white border-l-4 border-green-500 shadow-md rounded-lg p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      📊 Upload & Analyze Excel Files
-                    </h3>
-                    <p className="text-gray-700">
-                      Upload `.xlsx` or `.xls` files and instantly visualize your
-                      data using dynamic charts and tables.
-                    </p>
-                  </div>
-                  <div className="bg-white border-l-4 border-blue-500 shadow-md rounded-lg p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      🧠 AI Insights (Coming Soon)
-                    </h3>
-                    <p className="text-gray-700">
-                      Automatically generate insights and summaries from your
-                      Excel data using AI.
-                    </p>
-                  </div>
-                  <div className="bg-white border-l-4 border-yellow-500 shadow-md rounded-lg p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      📁 Upload History
-                    </h3>
-                    <p className="text-gray-700">
-                      Access and manage your previously uploaded files.
-                    </p>
-                  </div>
-                  <div className="bg-white border-l-4 border-purple-500 shadow-md rounded-lg p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      🛠️ Admin Dashboard
-                    </h3>
-                    <p className="text-gray-700">
-                      Admins can manage users, files, and platform statistics.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Sample Data Table */}
-                <div className="mt-8 bg-white shadow-lg rounded-lg p-4">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-2">
-                    📋 Sample Data Preview
-                  </h4>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border border-gray-300 text-sm text-left">
-                      <thead className="bg-green-100 text-gray-700 uppercase tracking-wider">
-                        <tr>
-                          <th className="px-4 py-2 border">Name</th>
-                          <th className="px-4 py-2 border">Department</th>
-                          <th className="px-4 py-2 border">Sales</th>
-                          <th className="px-4 py-2 border">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="bg-white hover:bg-green-50">
-                          <td className="px-4 py-2 border">Alice</td>
-                          <td className="px-4 py-2 border">Marketing</td>
-                          <td className="px-4 py-2 border">$4,000</td>
-                          <td className="px-4 py-2 border">2025-05-01</td>
-                        </tr>
-                        <tr className="bg-gray-50 hover:bg-green-50">
-                          <td className="px-4 py-2 border">Bob</td>
-                          <td className="px-4 py-2 border">Sales</td>
-                          <td className="px-4 py-2 border">$5,600</td>
-                          <td className="px-4 py-2 border">2025-05-02</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <p className="text-gray-700">
+                  Select an option from the sidebar to begin.
+                </p>
               </div>
             }
           />
 
-          {/* Other nested routes */}
-          <Route path="upload" element={<UploadExcel />} />
+          {/* Upload Page */}
+          <Route
+            path="upload"
+            element={
+              <div>
+                <UploadExcel onParsed={setParsedData} />
+                {Array.isArray(parsedData) && parsedData.length > 0 && (
+                  <ChartVisualizer data={parsedData} />
+                )}
+              </div>
+            }
+          />
+
+          {/* Other Pages */}
           <Route path="history" element={<UploadHistory />} />
           <Route path="ai" element={<AIInsights />} />
           <Route path="admin" element={<AdminDashboard />} />
