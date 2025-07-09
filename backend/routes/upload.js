@@ -9,7 +9,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // ✅ Upload Excel file route
-router.post("/upload", authMiddleware, upload.single("file"), async (req, res) => {
+router.post("/", authMiddleware, upload.single("file"), async (req, res) => {
   try {
     const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
@@ -25,17 +25,18 @@ router.post("/upload", authMiddleware, upload.single("file"), async (req, res) =
 
     res.json({ message: "Excel uploaded and saved to database", data });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Upload Error:", err);
     res.status(500).json({ message: "Error parsing or saving Excel file" });
   }
 });
 
-// ✅ Fetch Upload History route (this should be OUTSIDE of the POST route)
+// ✅ Fetch Upload History route
 router.get("/user-history", authMiddleware, async (req, res) => {
   try {
     const uploads = await ExcelUpload.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(uploads);
   } catch (err) {
+    console.error("❌ History Fetch Error:", err);
     res.status(500).json({ message: "Failed to fetch upload history" });
   }
 });
